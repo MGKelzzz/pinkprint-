@@ -34,9 +34,12 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-            - name: Build standalone release APK
-        working-directory: android
-        run: ./gradlew assembleRelease
+      - name: Build standalone 
+         release APK
+        working-directory: 
+         android
+        run: ./gradlew 
+         assembleRelease
 
       - name: Rename APK
         run: cp android/app/build/outputs/apk/release/app-release.apk PINKPRINT.apk

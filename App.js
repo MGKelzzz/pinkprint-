@@ -37,7 +37,7 @@ export default function App(){
   const keys=['entries','goals','focus','mood','habits','habitDate','xp','values','coachSaved','boardItems','drafts'];
   const pairs=await AsyncStorage.multiGet(keys); const d=Object.fromEntries(pairs);
   const read=(k,fallback)=>{try{return d[k]?JSON.parse(d[k]):fallback}catch{return fallback}};
-  setEntries(read('entries',[]));setGoals(read('goals',[]));setFocus(read('focus',''));setMood(read('mood',''));
+  const oldEntries=read('entries',[]).map((e,i)=>({...e,id:e.id||'legacy-entry-'+i,createdAt:e.createdAt||e.date||'Earlier',date:e.date||e.createdAt||'Earlier',timestamp:e.timestamp||0}));const oldGoals=read('goals',[]).map((g,i)=>({...g,id:g.id||'legacy-goal-'+i,createdAt:g.createdAt||''}));setEntries(oldEntries);setGoals(oldGoals);setFocus(read('focus',''));setMood(read('mood',''));
   const today=new Date().toDateString(); const oldDate=read('habitDate','');
   setDone(oldDate===today?read('habits',[]):[]);setDoneDate(today);setXp(read('xp',0));
   setValues(read('values',{matters:'',myself:'',outgrow:'',more:''}));setCoachSaved(read('coachSaved',[]));setBoardItems(read('boardItems',[]));setDrafts(read('drafts',[]));

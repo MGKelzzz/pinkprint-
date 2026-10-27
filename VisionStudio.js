@@ -22,7 +22,13 @@ export default function VisionStudio(){
  const [bg,setBg]=useState('#211027');
  const [drawings,setDrawings]=useState([]);
  const [currentPath,setCurrentPath]=useState('');
- const canvasRef=useRef(null);\n const pathRef=useRef('');
+ const canvasRef=useRef(null);
+ const pathRef=useRef('');
+ const elementsRef=useRef(elements);elementsRef.current=elements;
+ const drawingsRef=useRef(drawings);drawingsRef.current=drawings;
+ const titleRef=useRef(title);titleRef.current=title;
+ const bgRef=useRef(bg);bgRef.current=bg;
+ const pathRef=useRef('');
  useEffect(()=>{(async()=>{try{const raw=await AsyncStorage.getItem('pinkprintVisionStudio');if(raw){const data=JSON.parse(raw);setBoards(data.boards||[]);if(data.current){setTitle(data.current.title||'My next chapter');setElements(data.current.elements||[]);setDrawings(data.current.drawings||[]);setBg(data.current.bg||'#211027')}}}catch{}})()},[]);
  const persist=async(nextElements=elements,nextDrawings=drawings,nextTitle=title,nextBg=bg,nextBoards=boards)=>{const current={id:'current',title:nextTitle,elements:nextElements,drawings:nextDrawings,bg:nextBg,updatedAt:new Date().toISOString()};const nextBoards=[current,...nextBoards.filter(b=>b.id!=='current')].slice(0,30);setBoards(nextBoards);try{await AsyncStorage.setItem('pinkprintVisionStudio',JSON.stringify({boards:nextBoards,current}))}catch{Alert.alert('Save issue','Could not save your board. Check your device storage.')}};
  const addText=()=>{if(!text.trim())return;const item={id:uid(),type:'text',text:text.trim(),x:24,y:32,color,fontSize,fontWeight};const next=[...elements,item];setElements(next);setSelected(item.id);persist(next)};

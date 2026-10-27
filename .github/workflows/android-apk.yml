@@ -1,59 +1,41 @@
-name: Build PINKPRINT APK
+name: Android APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  build-android:
+  build-apk:
+    name: Build installable Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-      - name: Checkout source
+      - name: Check out source
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Generate Android project
-        run: npx expo prebuild --platform android --non-interactive
-
-      - name: Setup Java
+          node-version: '20'
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Make Gradle executable
-        run: chmod +x android/gradlew
-
-      - name: Build standalone 
-         release APK
-        working-directory: 
-         android
-        run: ./gradlew 
-         assembleRelease
-
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk PINKPRINT.apk
-        
-        
-
-      
-
-
-      - name: Upload PINKPRINT APK
+          java-version: '17'
+      - name: Install JavaScript dependencies
+        run: npm install
+      - name: Generate Android native project
+        run: npx expo prebuild --platform android --no-install
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: PINKPRINT-APK
-          path: PINKPRINT.apk
+          name: PINKPRINT-android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
-          

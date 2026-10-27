@@ -11,7 +11,7 @@ export default function BlogStudio(){
  const [site,setSite]=useState('');const [username,setUsername]=useState('');const [appPassword,setAppPassword]=useState('');
  const [connected,setConnected]=useState(false);const [checking,setChecking]=useState(false);const [message,setMessage]=useState('');
  const [title,setTitle]=useState('');const [body,setBody]=useState('');const [categories,setCategories]=useState('');const [tags,setTags]=useState('');const [status,setStatus]=useState('draft');const [localDrafts,setLocalDrafts]=useState([]);const [posts,setPosts]=useState([]);const [busy,setBusy]=useState(false);const [showSettings,setShowSettings]=useState(false);
- useEffect(()=>{(async()=>{try{const raw=await AsyncStorage.getItem(STORE_KEY);if(raw)setLocalDrafts(JSON.parse(raw));setSite((await SecureStore.getItemAsync(SITE_KEY))||'');setUsername((await SecureStore.getItemAsync(USER_KEY))||'');const pass=await SecureStore.getItemAsync(PASS_KEY);if(pass)setAppPassword(pass)}catch(e){}})()},[]);
+ useEffect(()=>{(async()=>{try{const raw=await AsyncStorage.getItem(STORE_KEY);if(raw)setLocalDrafts(JSON.parse(raw));const savedSite=(await SecureStore.getItemAsync(SITE_KEY))||'';setSite(savedSite);setUsername((await SecureStore.getItemAsync(USER_KEY))||'');const pass=await SecureStore.getItemAsync(PASS_KEY);if(pass){setAppPassword(pass);if(savedSite)setConnected(true)}}catch(e){}})()},[]);
  const auth=(u=username,p=appPassword)=>'Basic '+base64(u+':'+p);
  const apiUrl=(path)=>site.replace(/\/$/,'')+'/wp-json/wp/v2/'+path;
  const saveLocal=async(next)=>{setLocalDrafts(next);try{await AsyncStorage.setItem(STORE_KEY,JSON.stringify(next))}catch{Alert.alert('Save issue','Could not save your local drafts.')}};

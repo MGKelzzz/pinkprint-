@@ -16,6 +16,7 @@ export default function VisionStudio(){
  const [elements,setElements]=useState([]);
  const [selected,setSelected]=useState(null);
  const [tool,setTool]=useState('text');
+ const toolRef=useRef(tool);toolRef.current=tool;
  const [text,setText]=useState('My future is mine');
  const [color,setColor]=useState(P);
  const [fontSize,setFontSize]=useState(22);
@@ -39,7 +40,7 @@ export default function VisionStudio(){
  const deleteSelected=()=>{const next=elements.filter(e=>e.id!==selected);setElements(next);setSelected(null);persist(next)};
  const clearBoard=()=>Alert.alert('Clear this board?','This removes its photos, text, stickers, and drawings.',[{text:'Cancel',style:'cancel'},{text:'Clear',style:'destructive',onPress:()=>{setElements([]);setDrawings([]);setSelected(null);persist([],[])}}]);
  const undoDrawing=()=>{const next=drawings.slice(0,-1);setDrawings(next);persist(elements,next)};
- const panResponder=useRef(PanResponder.create({onStartShouldSetPanResponder:()=>true,onMoveShouldSetPanResponder:()=>true,onPanResponderGrant:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current='M '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderMove:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current=pathRef.current+' L '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderRelease:()=>{if(pathRef.current){const next=[...drawings,{id:uid(),d:pathRef.current,color,width:3}];setDrawings(next);persist(elements,next)}pathRef.current='';setCurrentPath('')}})).current;
+ const panResponder=useRef(PanResponder.create({onStartShouldSetPanResponder:()=>toolRef.current==='draw',onMoveShouldSetPanResponder:()=>toolRef.current==='draw',onPanResponderGrant:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current='M '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderMove:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current=pathRef.current+' L '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderRelease:()=>{if(pathRef.current){const next=[...drawings,{id:uid(),d:pathRef.current,color,width:3}];setDrawings(next);persist(elements,next)}pathRef.current='';setCurrentPath('')}})).current;
  const saveBoard=()=>persist();
  const newBoard=()=>{const id=uid();setBoardId(id);setTitle('Untitled vision board');setElements([]);setDrawings([]);setSelected(null);setBg('#211027');persist([],[],'Untitled vision board','#211027',boards,id)};
  const loadBoard=(b)=>{setBoardId(b.id);setTitle(b.title||'My next chapter');setElements(b.elements||[]);setDrawings(b.drawings||[]);setBg(b.bg||'#211027');setSelected(null);persist(b.elements||[],b.drawings||[],b.title||'My next chapter',b.bg||'#211027',boards.filter(x=>x.id!==b.id),b.id)};

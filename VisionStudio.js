@@ -41,7 +41,7 @@ export default function VisionStudio(){
  const undoDrawing=()=>{const next=drawings.slice(0,-1);setDrawings(next);persist(elements,next)};
  const panResponder=useRef(PanResponder.create({onStartShouldSetPanResponder:()=>true,onMoveShouldSetPanResponder:()=>true,onPanResponderGrant:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current='M '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderMove:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current=pathRef.current+' L '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderRelease:()=>{if(pathRef.current){const next=[...drawings,{id:uid(),d:pathRef.current,color,width:3}];setDrawings(next);persist(elements,next)}pathRef.current='';setCurrentPath('')}})).current;
  const saveBoard=()=>persist();
- const newBoard=()=>{const id=uid();setBoardId(id);setTitle('Untitled vision board');setElements([]);setDrawings([]);setSelected(null);setBg('#211027');persist([],[],'Untitled vision board','#211027',[...boards.filter(b=>b.id!==boardId)],id)};
+ const newBoard=()=>{const id=uid();setBoardId(id);setTitle('Untitled vision board');setElements([]);setDrawings([]);setSelected(null);setBg('#211027');persist([],[],'Untitled vision board','#211027',boards,id)};
  const loadBoard=(b)=>{setBoardId(b.id);setTitle(b.title||'My next chapter');setElements(b.elements||[]);setDrawings(b.drawings||[]);setBg(b.bg||'#211027');setSelected(null);persist(b.elements||[],b.drawings||[],b.title||'My next chapter',b.bg||'#211027',boards.filter(x=>x.id!==b.id),b.id)};
  const tiny=(label,fn,active=false)=> <Pressable key={label} onPress={fn} style={[v.tool,active&&v.toolOn]}><Text style={[v.toolText,active&&{color:'#08080b'}]}>{label}</Text></Pressable>;
  return <View style={v.wrap}>

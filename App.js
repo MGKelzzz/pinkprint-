@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView, View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,7 +26,7 @@ export default function App(){
  const [section,setSection]=useState('Journal');
  const [journal,setJournal]=useState(''); const [entries,setEntries]=useState([]);
  const [goal,setGoal]=useState(''); const [goals,setGoals]=useState([]);
- const [focus,setFocus]=useState(''); const [mood,setMood]=useState('');
+ const [focus,setFocus]=useState(''); const [focusStatus,setFocusStatus]=useState(''); const focusSaveQueue=useRef(Promise.resolve()); const [mood,setMood]=useState('');
  const [done,setDone]=useState([]); const [doneDate,setDoneDate]=useState('');
  const [xp,setXp]=useState(0);
  const [values,setValues]=useState({matters:'',myself:'',outgrow:'',more:''});
@@ -45,7 +45,8 @@ export default function App(){
   setValues(read('values',{matters:'',myself:'',outgrow:'',more:''}));setCoachSaved(read('coachSaved',[]));setBoardItems(read('boardItems',[]));setDrafts(read('drafts',[]));
  }catch(e){console.warn('PINKPRINT data load failed',e)}finally{setLoaded(true)}})()},[]);
  const persist=async(key,value,setter)=>{setter(value);try{await AsyncStorage.setItem(key,JSON.stringify(value))}catch(e){Alert.alert('Could not save','Your device could not save this change. Please check available storage and try again.')}};
- const setFocusSaved=async(v)=>{setFocus(v);try{await AsyncStorage.setItem('focus',JSON.stringify(v))}catch{}};
+ const setFocusSaved=(v)=>{setFocus(v);setFocusStatus('Saving…');focusSaveQueue.current=focusSaveQueue.current.catch(()=>{}).then(()=>AsyncStorage.setItem('focus',JSON.stringify(v))).then(()=>setFocusStatus('Saved on this device')).catch(()=>setFocusStatus('Could not save — tap SAVE FOCUS to retry'));};
+ const saveFocus=async()=>{setFocusStatus('Saving…');try{await focusSaveQueue.current.catch(()=>{});await AsyncStorage.setItem('focus',JSON.stringify(focus));setFocusStatus('Saved on this device')}catch{setFocusStatus('Could not save — check device storage and try again')}};
  const addXp=async(n)=>{const next=xp+n;setXp(next);try{await AsyncStorage.setItem('xp',JSON.stringify(next))}catch{}};
  const level=Math.floor(xp/100)+1;
  const completedGoals=goals.filter(g=>g.done).length;
@@ -74,7 +75,7 @@ export default function App(){
   <View style={s.head}><View pointerEvents="none" style={s.print}><Text style={s.spots}>◉　●　◎　◉{'\n'}●　◎　◉　●{'\n'}◎　◉　●　◎</Text></View><Text style={s.logo}>PINKPRINT</Text><Text style={s.tag}>YOUR LIFE • YOUR PATTERNS • YOUR BLUEPRINT</Text></View>
   <ScrollView key={tab} contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
    {tab==='Home'&&<><Text style={s.hero}>YOUR DAY, YOUR WAY.</Text><Text style={s.sub}>Small choices. Real progress. No perfection required.</Text>
-    <Card title="TODAY'S FOCUS"><Field value={focus} onChangeText={setFocusSaved} placeholder="What matters most today?"/></Card>
+    <Card title="TODAY'S FOCUS"><Field value={focus} onChangeText={setFocusSaved} placeholder="What matters most today?"/><Text style={s.dim}>{focusStatus||'Your focus is saved automatically on this device.'}</Text><Action label="SAVE FOCUS" onPress={saveFocus} secondary/></Card>
     <Card title="QUICK CHECK-IN" cyan><Text style={s.text}>How are you feeling?</Text><View style={s.chips}>{moods.map(m=><Pressable accessibilityRole="button" key={m} onPress={()=>chooseMood(m)} style={[s.chip,mood===m&&s.chipOn]}><Text style={[s.chipText,mood===m&&{color:BK}]}>{m}</Text></Pressable>)}</View></Card>
     <Card title="DAILY RESET">{habitList.map(h=><Pressable accessibilityRole="checkbox" accessibilityState={{checked:done.includes(h)}} key={h} onPress={()=>toggleHabit(h)} style={s.line}><Text style={[s.box,done.includes(h)&&{color:CY}]}>{done.includes(h)?'◆':'◇'}</Text><Text style={[s.text,done.includes(h)&&s.done]}>{h}</Text></Pressable>)}<Text style={s.dim}>Resets each day. Your progress is saved on this device.</Text></Card>
     <View style={s.row}><View style={s.stat}><Text style={s.num}>{xp}</Text><Text style={s.dim}>XP • LEVEL {level}</Text></View><View style={s.stat}><Text style={[s.num,{color:CY}]}>{completedGoals}</Text><Text style={s.dim}>GOALS DONE</Text></View></View>

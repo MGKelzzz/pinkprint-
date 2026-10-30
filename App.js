@@ -24,7 +24,7 @@ function Empty({children}){return <Text style={s.empty}>{children}</Text>}
 export default function App(){
  const [tab,setTab]=useState('Home');
  const [section,setSection]=useState('Journal');
- const [journal,setJournal]=useState(''); const [entries,setEntries]=useState([]);
+ const [journal,setJournal]=useState(''); const [entries,setEntries]=useState([]); const [journeyEvents,setJourneyEvents]=useState([]);
  const [goal,setGoal]=useState(''); const [goals,setGoals]=useState([]);
  const [focus,setFocus]=useState(''); const [focusStatus,setFocusStatus]=useState(''); const focusSaveQueue=useRef(Promise.resolve()); const [mood,setMood]=useState('');
  const [done,setDone]=useState([]); const [doneDate,setDoneDate]=useState('');
@@ -36,17 +36,18 @@ export default function App(){
  const [loaded,setLoaded]=useState(false);
 
  useEffect(()=>{(async()=>{try{
-  const keys=['entries','goals','focus','mood','habits','habitDate','xp','values','coachSaved','boardItems','drafts'];
+  const keys=['entries','goals','focus','mood','habits','habitDate','xp','values','coachSaved','boardItems','drafts','journeyEvents'];
   const pairs=await AsyncStorage.multiGet(keys); const d=Object.fromEntries(pairs);
   const read=(k,fallback)=>{try{return d[k]?JSON.parse(d[k]):fallback}catch{return fallback}};
-  const oldEntries=read('entries',[]).map((e,i)=>({...e,id:e.id||'legacy-entry-'+i,createdAt:e.createdAt||e.date||'Earlier',date:e.date||e.createdAt||'Earlier',timestamp:e.timestamp||0}));const oldGoals=read('goals',[]).map((g,i)=>({...g,id:g.id||'legacy-goal-'+i,createdAt:g.createdAt||''}));setEntries(oldEntries);setGoals(oldGoals);setFocus(read('focus',''));setMood(read('mood',''));
+  const oldEntries=read('entries',[]).map((e,i)=>({...e,id:e.id||'legacy-entry-'+i,createdAt:e.createdAt||e.date||'Earlier',date:e.date||e.createdAt||'Earlier',timestamp:e.timestamp||0}));const oldGoals=read('goals',[]).map((g,i)=>({...g,id:g.id||'legacy-goal-'+i,createdAt:g.createdAt||''}));setEntries(oldEntries);setGoals(oldGoals);setJourneyEvents(read('journeyEvents',[]));setFocus(read('focus',''));setMood(read('mood',''));
   const today=new Date().toDateString(); const oldDate=read('habitDate','');
   setDone(oldDate===today?read('habits',[]):[]);setDoneDate(today);setXp(read('xp',0));
   setValues(read('values',{matters:'',myself:'',outgrow:'',more:''}));setCoachSaved(read('coachSaved',[]));setBoardItems(read('boardItems',[]));setDrafts(read('drafts',[]));
  }catch(e){console.warn('PINKPRINT data load failed',e)}finally{setLoaded(true)}})()},[]);
  const persist=async(key,value,setter)=>{setter(value);try{await AsyncStorage.setItem(key,JSON.stringify(value))}catch(e){Alert.alert('Could not save','Your device could not save this change. Please check available storage and try again.')}};
  const setFocusSaved=(v)=>{setFocus(v);setFocusStatus('Saving…');focusSaveQueue.current=focusSaveQueue.current.catch(()=>{}).then(()=>AsyncStorage.setItem('focus',JSON.stringify(v))).then(()=>setFocusStatus('Saved on this device')).catch(()=>setFocusStatus('Could not save — tap SAVE FOCUS to retry'));};
- const saveFocus=async()=>{setFocusStatus('Saving…');try{await focusSaveQueue.current.catch(()=>{});await AsyncStorage.setItem('focus',JSON.stringify(focus));setFocusStatus('Saved on this device')}catch{setFocusStatus('Could not save — check device storage and try again')}};
+ const recordJourney=async(label,text)=>{const now=Date.now();const next=[{id:String(now),label,text,date:new Date(now).toLocaleString(),timestamp:now},...journeyEvents];await persist('journeyEvents',next,setJourneyEvents)};
+ const saveFocus=async()=>{setFocusStatus('Saving…');try{await focusSaveQueue.current.catch(()=>{});await AsyncStorage.setItem('focus',JSON.stringify(focus));if(focus.trim())await recordJourney('DAILY FOCUS',focus.trim());setFocusStatus('Saved to My Journey')}catch{setFocusStatus('Could not save — check device storage and try again')}};
  const addXp=async(n)=>{const next=xp+n;setXp(next);try{await AsyncStorage.setItem('xp',JSON.stringify(next))}catch{}};
  const level=Math.floor(xp/100)+1;
  const completedGoals=goals.filter(g=>g.done).length;
@@ -54,8 +55,9 @@ export default function App(){
   ...entries.map(e=>({date:e.createdAt,label:'JOURNAL',text:e.text,sort:e.timestamp||0})),
   ...goals.filter(g=>g.doneAt).map(g=>({date:g.doneAt,label:'GOAL COMPLETED',text:g.text,sort:g.doneAtMs||0})),
   ...coachSaved.map(c=>({date:c.date,label:'COACH NOTE',text:c.note,sort:c.timestamp||0})),
-  ...boardItems.map(b=>({date:b.date,label:'VISION',text:b.title+(b.note?' — '+b.note:''),sort:b.timestamp||0}))
- ].sort((a,b)=>b.sort-a.sort),[entries,goals,coachSaved,boardItems]);
+  ...boardItems.map(b=>({date:b.date,label:'VISION',text:b.title+(b.note?' — '+b.note:''),sort:b.timestamp||0})),
+  ...journeyEvents.map(e=>({date:e.date,label:e.label,text:e.text,sort:e.timestamp||0}))
+ ].sort((a,b)=>b.sort-a.sort),[entries,goals,coachSaved,boardItems,journeyEvents]);
 
  const saveEntry=async()=>{if(!journal.trim())return;const now=Date.now();const next=[{id:String(now),text:journal.trim(),date:new Date(now).toLocaleString(),createdAt:new Date(now).toLocaleString(),timestamp:now},...entries];await persist('entries',next,setEntries);setJournal('');await addXp(10)};
  const addGoal=async()=>{if(!goal.trim())return;const next=[{id:String(Date.now()),text:goal.trim(),done:false,createdAt:new Date().toLocaleDateString()},...goals];await persist('goals',next,setGoals);setGoal('')};
@@ -64,6 +66,7 @@ export default function App(){
  const toggleHabit=async(h)=>{const next=done.includes(h)?done.filter(x=>x!==h):[...done,h];setDone(next);setDoneDate(new Date().toDateString());try{await AsyncStorage.multiSet([['habits',JSON.stringify(next)],['habitDate',JSON.stringify(new Date().toDateString())]])}catch{}if(!done.includes(h))await addXp(5)};
  const chooseMood=async(m)=>{setMood(m);try{await AsyncStorage.setItem('mood',JSON.stringify(m))}catch{}};
  const saveValues=async(next)=>{setValues(next);try{await AsyncStorage.setItem('values',JSON.stringify(next))}catch{Alert.alert('Could not save','Please try again.')}};
+ const saveMeToJourney=async()=>{const lines=[['What matters to me',values.matters],['What makes me feel like myself',values.myself],['What I am ready to outgrow',values.outgrow],['What I want more of',values.more]].filter(x=>x[1]?.trim());if(!lines.length){Alert.alert('Add a little about yourself','Write at least one answer first, then save it to My Journey.');return}await recordJourney('MY BLUEPRINT',lines.map(x=>x[0]+': '+x[1].trim()).join('\n'));Alert.alert('Added to My Journey','Your Me section reflection is now part of your timeline.')};
  const saveCoach=async()=>{if(!coachNote.trim())return;const now=Date.now();const next=[{id:String(now),mode:coachMode,note:coachNote.trim(),date:new Date(now).toLocaleString(),timestamp:now},...coachSaved];await persist('coachSaved',next,setCoachSaved);setCoachNote('');await addXp(5)};
  const saveBoard=async()=>{if(!boardTitle.trim()&&!boardNote.trim())return;const now=Date.now();const next=[{id:String(now),title:boardTitle.trim()||'Untitled vision',note:boardNote.trim(),date:new Date(now).toLocaleDateString(),timestamp:now},...boardItems];await persist('boardItems',next,setBoardItems);setBoardNote('');await addXp(5)};
  const saveDraft=async()=>{if(!draftTitle.trim()&&!draftBody.trim())return;const now=Date.now();const next=[{id:String(now),title:draftTitle.trim()||'Untitled draft',body:draftBody.trim(),date:new Date(now).toLocaleString(),timestamp:now},...drafts];await persist('drafts',next,setDrafts);setDraftTitle('');setDraftBody('')};
@@ -75,7 +78,7 @@ export default function App(){
   <View style={s.head}><View pointerEvents="none" style={s.print}><Text style={s.spots}>◉　●　◎　◉{'\n'}●　◎　◉　●{'\n'}◎　◉　●　◎</Text></View><Text style={s.logo}>PINKPRINT</Text><Text style={s.tag}>YOUR LIFE • YOUR PATTERNS • YOUR BLUEPRINT</Text></View>
   <ScrollView key={tab} contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
    {tab==='Home'&&<><Text style={s.hero}>YOUR DAY, YOUR WAY.</Text><Text style={s.sub}>Small choices. Real progress. No perfection required.</Text>
-    <Card title="TODAY'S FOCUS"><Field value={focus} onChangeText={setFocusSaved} placeholder="What matters most today?"/><Text style={s.dim}>{focusStatus||'Your focus is saved automatically on this device.'}</Text><Action label="SAVE FOCUS" onPress={saveFocus} secondary/></Card>
+    <Card title="TODAY'S FOCUS"><Field value={focus} onChangeText={setFocusSaved} placeholder="What matters most today?"/><Text style={s.dim}>{focusStatus||'Your focus is saved automatically on this device.'}</Text><Action label="SAVE FOCUS TO MY JOURNEY" onPress={saveFocus} secondary/></Card>
     <Card title="QUICK CHECK-IN" cyan><Text style={s.text}>How are you feeling?</Text><View style={s.chips}>{moods.map(m=><Pressable accessibilityRole="button" key={m} onPress={()=>chooseMood(m)} style={[s.chip,mood===m&&s.chipOn]}><Text style={[s.chipText,mood===m&&{color:BK}]}>{m}</Text></Pressable>)}</View></Card>
     <Card title="DAILY RESET">{habitList.map(h=><Pressable accessibilityRole="checkbox" accessibilityState={{checked:done.includes(h)}} key={h} onPress={()=>toggleHabit(h)} style={s.line}><Text style={[s.box,done.includes(h)&&{color:CY}]}>{done.includes(h)?'◆':'◇'}</Text><Text style={[s.text,done.includes(h)&&s.done]}>{h}</Text></Pressable>)}<Text style={s.dim}>Resets each day. Your progress is saved on this device.</Text></Card>
     <View style={s.row}><View style={s.stat}><Text style={s.num}>{xp}</Text><Text style={s.dim}>XP • LEVEL {level}</Text></View><View style={s.stat}><Text style={[s.num,{color:CY}]}>{completedGoals}</Text><Text style={s.dim}>GOALS DONE</Text></View></View>
@@ -83,6 +86,7 @@ export default function App(){
    </>}
    {tab==='Me'&&<><Text style={s.hero}>MY BLUEPRINT</Text><Text style={s.sub}>You're the author. This is a space to discover, not define, you.</Text>
     {valuePrompts.map((p,i)=>{const k=['matters','myself','outgrow','more'][i];return <Card key={k} title={p.toUpperCase()}><Field value={values[k]} onChangeText={v=>saveValues({...values,[k]:v})} placeholder="Write what feels true for you…" multiline/></Card>})}
+    <Action label="SAVE MY BLUEPRINT TO MY JOURNEY" onPress={saveMeToJourney}/>
     <Card title="LIFE AREAS" cyan><Text style={s.text}>Self • Style • Relationships • Home • Money • Career • Creativity • Fun</Text><Text style={s.dim}>You get to decide what each area means to you.</Text></Card>
    </>}
    {tab==='Coach'&&<><Text style={s.hero}>YOUR POCKET COACH</Text><Text style={s.sub}>A gentle, practical reflection space. This version works offline; it does not pretend to be an AI therapist.</Text>

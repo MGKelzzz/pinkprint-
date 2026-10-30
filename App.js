@@ -92,7 +92,7 @@ export default function App(){
  const monthMoments=timeline.filter(x=>{const d=new Date(x.sort||0),n=new Date();return x.sort&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear()}).length;
  if(!loaded)return <SafeAreaView style={s.safe}><StatusBar style="light"/><View style={s.loading}><Text style={[s.logo,{color:accent,textShadowColor:accent}]}>PINKPRINT</Text><Text style={s.dim}>Opening your blueprint…</Text></View></SafeAreaView>;
  return <SafeAreaView style={s.safe}><StatusBar style="light"/>
-  <View style={s.head}><View pointerEvents="none" style={s.print}><Text style={s.spots}>◉　●　◎　◉{'\n'}●　◎　◉　●{'\n'}◎　◉　●　◎</Text></View><Text style={s.logo}>PINKPRINT</Text><Text style={s.tag}>YOUR LIFE • YOUR PATTERNS • YOUR BLUEPRINT</Text></View>
+  <View style={[s.head,{borderBottomColor:accent}]}><View pointerEvents="none" style={s.print}><Text style={s.spots}>◉　●　◎　◉{'\n'}●　◎　◉　●{'\n'}◎　◉　●　◎</Text></View><Text style={s.logo}>PINKPRINT</Text><Text style={s.tag}>YOUR LIFE • YOUR PATTERNS • YOUR BLUEPRINT</Text></View>
   <ScrollView key={tab} contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
    {tab==='Home'&&<><Text style={s.hero}>YOUR DAY, YOUR WAY.</Text><Text style={s.sub}>Small choices. Real progress. No perfection required.</Text>
     <Card title="TODAY'S FOCUS"><Field value={focus} onChangeText={setFocusSaved} placeholder="What matters most today?"/><Text style={s.dim}>{focusStatus||'Your focus is saved automatically on this device.'}</Text><Action label="SAVE FOCUS TO MY JOURNEY" onPress={saveFocus} secondary/></Card>
@@ -134,7 +134,7 @@ export default function App(){
 }
 const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:BK},loading:{flex:1,alignItems:'center',justifyContent:'center',gap:12},
- head:{backgroundColor:'#0b0b10',paddingHorizontal:18,paddingTop:8,paddingBottom:13,borderBottomWidth:2,borderBottomColor:accent,overflow:'hidden'},
+ head:{backgroundColor:'#0b0b10',paddingHorizontal:18,paddingTop:8,paddingBottom:13,borderBottomWidth:2,borderBottomColor:P,overflow:'hidden'},
  print:{position:'absolute',right:-8,top:-8,width:155,height:92,backgroundColor:P,transform:[{rotate:'-8deg'}],opacity:.98},
  spots:{fontSize:22,color:'#08080b',fontWeight:'900',lineHeight:27,letterSpacing:1,padding:9},
  logo:{color:P,fontSize:30,fontWeight:'900',letterSpacing:2,textShadowColor:PU,textShadowRadius:10},

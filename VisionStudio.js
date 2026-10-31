@@ -64,10 +64,10 @@ export default function VisionStudio(){
    {(tool==='draw'||tool==='erase')&&<><Text style={v.hint}>{tool==='erase'?'Erase by painting over your strokes.':'Draw directly on the canvas with your finger.'} Brush size: {brushSize}</Text><View style={v.tools}>{[2,4,7,11].map(n=>tiny(String(n),()=>setBrushSize(n),brushSize===n))}{tiny('UNDO STROKE',undoDrawing)}</View></>}
    <View style={v.colors}>{COLORS.map(c=><Pressable key={c} onPress={()=>setColor(c)} style={[v.swatch,{backgroundColor:c,borderColor:color===c?CY:'#555'}]}/>)}</View>
   </View>
-  <View style={[v.canvas,{backgroundColor:bg}]} ref={canvasRef} {...(tool==='draw'?panResponder.panHandlers:{})}>
+  <View style={[v.canvas,{backgroundColor:bg}]} ref={canvasRef} {...((tool==='draw'||tool==='erase')?panResponder.panHandlers:{})}>
    <Text pointerEvents="none" style={v.canvasPrint}>◉  ●  ◎  ◉</Text>
    <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 320 480" preserveAspectRatio="none">
-    {drawings.map(d=><Path key={d.id} d={d.d} stroke={d.color} strokeWidth={d.width} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}{currentPath?<Path d={currentPath} stroke={color} strokeWidth={3} fill="none" strokeLinecap="round"/>:null}
+    {drawings.map(d=><Path key={d.id} d={d.d} stroke={d.color} strokeWidth={d.width} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}{currentPath?<Path d={currentPath} stroke={tool==='erase'?bg:color} strokeWidth={tool==='erase'?brushSize*4:brushSize} fill="none" strokeLinecap="round"/>:null}
    </Svg>
    {elements.map(e=><Pressable key={e.id} onPress={()=>setSelected(e.id)} style={[v.element,{left:e.x+'%',top:e.y+'%',borderColor:selected===e.id?CY:'transparent',transform:[{rotate:(e.rotation||0)+'deg'}]}]}>
     {e.type==='image'?<Image source={{uri:e.uri}} resizeMode="cover" style={{width:e.width||130,height:e.height||130,borderRadius:10}}/>:<Text style={{color:e.color||P,fontSize:e.fontSize||22,fontWeight:e.fontWeight==='italic'?'500':(e.fontWeight||'900'),fontStyle:e.fontWeight==='italic'?'italic':'normal',textShadowColor:'#000',textShadowRadius:3}}>{e.text}</Text>}

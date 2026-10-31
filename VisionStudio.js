@@ -15,12 +15,14 @@ export default function VisionStudio(){
  const [boards,setBoards]=useState([]);
  const [elements,setElements]=useState([]);
  const [selected,setSelected]=useState(null);
+ const [mode,setMode]=useState('simple');
  const [tool,setTool]=useState('text');
  const toolRef=useRef(tool);toolRef.current=tool;
  const [text,setText]=useState('My future is mine');
  const [color,setColor]=useState(P);
  const [fontSize,setFontSize]=useState(22);
  const [fontWeight,setFontWeight]=useState('900');
+ const [brushSize,setBrushSize]=useState(4);
  const [bg,setBg]=useState('#211027');
  const [drawings,setDrawings]=useState([]);
  const [currentPath,setCurrentPath]=useState('');
@@ -40,19 +42,26 @@ export default function VisionStudio(){
  const deleteSelected=()=>{const next=elements.filter(e=>e.id!==selected);setElements(next);setSelected(null);persist(next)};
  const clearBoard=()=>Alert.alert('Clear this board?','This removes its photos, text, stickers, and drawings.',[{text:'Cancel',style:'cancel'},{text:'Clear',style:'destructive',onPress:()=>{setElements([]);setDrawings([]);setSelected(null);persist([],[])}}]);
  const undoDrawing=()=>{const next=drawings.slice(0,-1);setDrawings(next);persist(elements,next)};
- const panResponder=useRef(PanResponder.create({onStartShouldSetPanResponder:()=>toolRef.current==='draw',onMoveShouldSetPanResponder:()=>toolRef.current==='draw',onPanResponderGrant:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current='M '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderMove:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current=pathRef.current+' L '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderRelease:()=>{if(pathRef.current){const next=[...drawings,{id:uid(),d:pathRef.current,color,width:3}];setDrawings(next);persist(elements,next)}pathRef.current='';setCurrentPath('')}})).current;
+ const panResponder=useRef(PanResponder.create({onStartShouldSetPanResponder:()=>toolRef.current==='draw'||toolRef.current==='erase',onMoveShouldSetPanResponder:()=>toolRef.current==='draw'||toolRef.current==='erase',onPanResponderGrant:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current='M '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderMove:(evt)=>{const {locationX:x,locationY:y}=evt.nativeEvent;pathRef.current=pathRef.current+' L '+x+' '+y;setCurrentPath(pathRef.current)},onPanResponderRelease:()=>{if(pathRef.current){const next=[...drawings,{id:uid(),d:pathRef.current,color:toolRef.current==='erase'?bgRef.current:color,width:toolRef.current==='erase'?brushSize*4:brushSize}];setDrawings(next);persist(elements,next)}pathRef.current='';setCurrentPath('')}})).current;
  const saveBoard=()=>persist();
+ const duplicateSelected=()=>{const e=elements.find(x=>x.id===selected);if(!e)return;const copy={...e,id:uid(),x:Math.min(78,(e.x||0)+5),y:Math.min(85,(e.y||0)+5)};const next=[...elements,copy];setElements(next);setSelected(copy.id);persist(next)};
+ const rotateSelected=()=>{const e=elements.find(x=>x.id===selected);if(e)updateSelected({rotation:((e.rotation||0)+15)%360})};
+ const moveLayer=(direction)=>{const index=elements.findIndex(e=>e.id===selected);if(index<0)return;const target=index+direction;if(target<0||target>=elements.length)return;const next=[...elements];[next[index],next[target]]=[next[target],next[index]];setElements(next);persist(next)};
  const newBoard=()=>{const id=uid();setBoardId(id);setTitle('Untitled vision board');setElements([]);setDrawings([]);setSelected(null);setBg('#211027');persist([],[],'Untitled vision board','#211027',boards,id)};
  const loadBoard=(b)=>{setBoardId(b.id);setTitle(b.title||'My next chapter');setElements(b.elements||[]);setDrawings(b.drawings||[]);setBg(b.bg||'#211027');setSelected(null);persist(b.elements||[],b.drawings||[],b.title||'My next chapter',b.bg||'#211027',boards.filter(x=>x.id!==b.id),b.id)};
  const tiny=(label,fn,active=false)=> <Pressable key={label} onPress={fn} style={[v.tool,active&&v.toolOn]}><Text style={[v.toolText,active&&{color:'#08080b'}]}>{label}</Text></Pressable>;
  return <View style={v.wrap}>
   <Text style={v.kicker}>✦ VISION STUDIO / CREATIVE CANVAS ✦</Text>
   <TextInput value={title} onChangeText={setTitle} onEndEditing={()=>persist()} placeholder="Name your board" placeholderTextColor="#aaa" style={v.titleInput}/>
-  <View style={v.tools}>{tiny('TEXT',()=>setTool('text'),tool==='text')}{tiny('DRAW',()=>setTool('draw'),tool==='draw')}{tiny('STICKERS',()=>setTool('stickers'),tool==='stickers')}{tiny('PHOTOS',addPhoto)}</View>
+  <View style={v.tools}>{tiny('QUICK EDIT',()=>setMode('simple'),mode==='simple')}{tiny('ADVANCED',()=>setMode('advanced'),mode==='advanced')}</View>
+  <View style={v.panel}>
+   <Text style={v.hint}>{mode==='simple'?'QUICK CREATE · Add a picture, a phrase, or a little decoration.':'FULL EDITOR · Choose a tool, customize it, then work on your canvas.'}</Text>
+   <View style={v.tools}>{tiny('ADD PHOTO',addPhoto)}{tiny('ADD TEXT',()=>setTool('text'),tool==='text')}{tiny('STICKERS',()=>setTool('stickers'),tool==='stickers')}{mode==='advanced'&&tiny('DRAW',()=>setTool('draw'),tool==='draw')}{mode==='advanced'&&tiny('ERASER',()=>setTool('erase'),tool==='erase')}</View>
+  </View>
   <View style={v.panel}>
    {tool==='text'&&<><TextInput value={text} onChangeText={setText} placeholder="Write your words…" placeholderTextColor="#888" style={v.input}/><View style={v.tools}>{FONTS.map(f=>tiny(f.label,()=>setFontWeight(f.value),fontWeight===f.value))}{tiny('ADD TEXT',addText,true)}</View><View style={v.tools}>{[16,22,30,40].map(n=>tiny(String(n),()=>setFontSize(n),fontSize===n))}</View></>}
    {tool==='stickers'&&<View style={v.stickers}>{STICKERS.map(st=>tiny(st,()=>addSticker(st)))}</View>}
-   {tool==='draw'&&<Text style={v.hint}>Draw with your finger on the canvas. Choose a color below. Use UNDO STROKE to remove your last line.</Text>}
+   {(tool==='draw'||tool==='erase')&&<><Text style={v.hint}>{tool==='erase'?'Erase by painting over your strokes.':'Draw directly on the canvas with your finger.'} Brush size: {brushSize}</Text><View style={v.tools}>{[2,4,7,11].map(n=>tiny(String(n),()=>setBrushSize(n),brushSize===n))}{tiny('UNDO STROKE',undoDrawing)}</View></>}
    <View style={v.colors}>{COLORS.map(c=><Pressable key={c} onPress={()=>setColor(c)} style={[v.swatch,{backgroundColor:c,borderColor:color===c?CY:'#555'}]}/>)}</View>
   </View>
   <View style={[v.canvas,{backgroundColor:bg}]} ref={canvasRef} {...(tool==='draw'?panResponder.panHandlers:{})}>
@@ -60,13 +69,13 @@ export default function VisionStudio(){
    <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 320 480" preserveAspectRatio="none">
     {drawings.map(d=><Path key={d.id} d={d.d} stroke={d.color} strokeWidth={d.width} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}{currentPath?<Path d={currentPath} stroke={color} strokeWidth={3} fill="none" strokeLinecap="round"/>:null}
    </Svg>
-   {elements.map(e=><Pressable key={e.id} onPress={()=>setSelected(e.id)} style={[v.element,{left:e.x+'%',top:e.y+'%',borderColor:selected===e.id?CY:'transparent'}]}>
+   {elements.map(e=><Pressable key={e.id} onPress={()=>setSelected(e.id)} style={[v.element,{left:e.x+'%',top:e.y+'%',borderColor:selected===e.id?CY:'transparent',transform:[{rotate:(e.rotation||0)+'deg'}]}]}>
     {e.type==='image'?<Image source={{uri:e.uri}} resizeMode="cover" style={{width:e.width||130,height:e.height||130,borderRadius:10}}/>:<Text style={{color:e.color||P,fontSize:e.fontSize||22,fontWeight:e.fontWeight==='italic'?'500':(e.fontWeight||'900'),fontStyle:e.fontWeight==='italic'?'italic':'normal',textShadowColor:'#000',textShadowRadius:3}}>{e.text}</Text>}
    </Pressable>)}
    {elements.length===0&&drawings.length===0&&<Text pointerEvents="none" style={v.canvasPlaceholder}>YOUR DREAMS LOOK GOOD ON YOU.{"\n"}Add photos, words, stickers & sketches.</Text>}
   </View>
-  {selected&&<View style={v.panel}><Text style={v.hint}>SELECTED LAYER · Move it, recolor it, resize it, or delete it.</Text><View style={v.tools}>{tiny('←',()=>moveSelected(-5,0))}{tiny('→',()=>moveSelected(5,0))}{tiny('↑',()=>moveSelected(0,-5))}{tiny('↓',()=>moveSelected(0,5))}{tiny('BIGGER',()=>updateSelected({fontSize:Math.min(60,(elements.find(e=>e.id===selected)?.fontSize||22)+4),width:Math.min(240,(elements.find(e=>e.id===selected)?.width||130)+15),height:Math.min(240,(elements.find(e=>e.id===selected)?.height||130)+15)}))}{tiny('SMALLER',()=>updateSelected({fontSize:Math.max(10,(elements.find(e=>e.id===selected)?.fontSize||22)-4),width:Math.max(50,(elements.find(e=>e.id===selected)?.width||130)-15),height:Math.max(50,(elements.find(e=>e.id===selected)?.height||130)-15)}))}{tiny('DELETE',deleteSelected)}</View></View>}
-  <Text style={v.hint}>BACKGROUND</Text><View style={v.tools}>{['#211027','#101927','#3b0c28','#090910','#341a12','#24133d'].map(c=>tiny(' ',()=>{setBg(c);persist(elements,drawings,title,c)},bg===c))}{tiny('UNDO STROKE',undoDrawing)}</View>
+  {selected&&<View style={v.panel}><Text style={v.hint}>SELECTED LAYER · Adjust its position, size, angle, and stacking order.</Text><View style={v.tools}>{tiny('←',()=>moveSelected(-5,0))}{tiny('→',()=>moveSelected(5,0))}{tiny('↑',()=>moveSelected(0,-5))}{tiny('↓',()=>moveSelected(0,5))}{tiny('BIGGER',()=>updateSelected({fontSize:Math.min(60,(elements.find(e=>e.id===selected)?.fontSize||22)+4),width:Math.min(240,(elements.find(e=>e.id===selected)?.width||130)+15),height:Math.min(240,(elements.find(e=>e.id===selected)?.height||130)+15)}))}{tiny('SMALLER',()=>updateSelected({fontSize:Math.max(10,(elements.find(e=>e.id===selected)?.fontSize||22)-4),width:Math.max(50,(elements.find(e=>e.id===selected)?.width||130)-15),height:Math.max(50,(elements.find(e=>e.id===selected)?.height||130)-15)}))}</View><View style={v.tools}>{tiny('ROTATE',rotateSelected)}{tiny('DUPLICATE',duplicateSelected)}{tiny('SEND BACK',()=>moveLayer(-1))}{tiny('BRING FRONT',()=>moveLayer(1))}{tiny('DELETE',deleteSelected)}</View></View>}
+  {mode==='advanced'&&<><Text style={v.hint}>CANVAS BACKGROUND</Text><View style={v.tools}>{['#211027','#101927','#3b0c28','#090910','#341a12','#24133d','#fff0f7','#f6d8eb'].map(c=>tiny(' ',()=>{setBg(c);persist(elements,drawings,title,c)},bg===c))}{tiny('UNDO STROKE',undoDrawing)}</View></>}
   <View style={v.tools}>{tiny('SAVE BOARD',saveBoard,true)}{tiny('NEW BOARD',newBoard)}{tiny('CLEAR',clearBoard)}</View>
   <Text style={v.kicker}>SAVED BOARDS</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{boards.filter(b=>b.id!==boardId).map(b=>tiny(b.title,()=>loadBoard(b)))}</ScrollView>
  </View>;

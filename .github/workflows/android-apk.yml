@@ -42,4 +42,4 @@ jobs:
           name: PINKPRINT-android-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

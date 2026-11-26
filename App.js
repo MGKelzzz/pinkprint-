@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VisionStudio from './VisionStudio';
 import BlogStudio from './BlogStudio';
+import AIChat from './AIChat';
 
 const P='#ff1493', CY='#00f5ff', PU='#a855f7', BK='#07070a', CD='#15151c', TX='#fff7fb', M='#a8a8b3';
 const tabs=['Home','Me','Coach','Create','Goals','Journey'];
@@ -115,13 +116,11 @@ export default function App(){
     <Card title="MAKE PINKPRINT YOURS"><Text style={s.dim}>Choose your accent mood.</Text><View style={s.chips}>{[{id:'pink',label:'PINK',color:P},{id:'cyan',label:'CYAN',color:CY},{id:'purple',label:'PURPLE',color:PU}].map(t=><Pressable key={t.id} onPress={()=>setAppTheme(t.id)} style={[s.chip,{borderColor:t.color},theme===t.id&&{backgroundColor:t.color}]}><Text style={[s.chipText,theme===t.id&&{color:BK}]}>{t.label}</Text></Pressable>)}</View></Card>
     <Card title="LIFE AREAS" cyan><Text style={s.text}>Self • Style • Relationships • Home • Money • Career • Creativity • Fun</Text><Text style={s.dim}>You get to decide what each area means to you.</Text></Card>
    </>}
-   {tab==='Coach'&&<><Text style={s.hero}>YOUR POCKET COACH</Text><Text style={s.sub}>A gentle, practical reflection space. This version works offline; it does not pretend to be an AI therapist.</Text>
-    <View style={s.chips}>{coachModes.map(m=><Pressable key={m.id} onPress={()=>setCoachMode(m.id)} style={[s.chip,coachMode===m.id&&s.chipOn]}><Text style={[s.chipText,coachMode===m.id&&{color:BK}]}>{m.label.toUpperCase()}</Text></Pressable>)}</View>
-    <Card title={mode.label.toUpperCase()} cyan><Text style={s.text}>{mode.intro}</Text><Text style={s.dim}>Reality check: what do I know, what am I assuming, what am I feeling, and what can I control?</Text><Text style={[s.dim,{marginTop:12}]}>Try asking yourself: What do I know? What am I assuming? What is one thing I can control?</Text><Field value={coachNote} onChangeText={setCoachNote} placeholder="Write your thoughts or next step…" multiline/><Action label="SAVE REFLECTION  +5 XP" onPress={saveCoach}/></Card>
+   {tab==='Coach'&&<><Text style={s.hero}>YOUR POCKET COACH</Text><Text style={s.sub}>A real AI thinking partner for reflection, planning, self-discovery, and creativity. Connect your private AI service in settings to start chatting.</Text>
+    <AIChat/>
+    <Card title="OFFLINE REFLECTION" cyan><Text style={s.dim}>Want to write without AI? Your original guided reflection tools still work offline.</Text><View style={s.chips}>{coachModes.map(m=><Pressable key={m.id} onPress={()=>setCoachMode(m.id)} style={[s.chip,coachMode===m.id&&s.chipOn]}><Text style={[s.chipText,coachMode===m.id&&{color:BK}]}>{m.label.toUpperCase()}</Text></Pressable>)}</View><Text style={s.text}>{mode.intro}</Text><Field value={coachNote} onChangeText={setCoachNote} placeholder="Write your thoughts or next step…" multiline/><Action label="SAVE REFLECTION  +5 XP" onPress={saveCoach}/></Card>
     {coachSaved.map(c=><Card key={c.id} title={c.mode.toUpperCase()+' • '+c.date}><Text style={s.text}>{c.note}</Text></Card>)}
-    {!coachSaved.length&&<Empty>Your reflections will appear here after you save one.</Empty>}
-   </>}
-   {tab==='Create'&&<><Text style={s.hero}>CREATE STUDIO</Text><Text style={s.sub}>Ideas, dreams, words, and little pieces of your next chapter.</Text>
+   </>}{tab==='Create'&&<><Text style={s.hero}>CREATE STUDIO</Text><Text style={s.sub}>Ideas, dreams, words, and little pieces of your next chapter.</Text>
     <View style={s.chips}>{['Journal','Vision','Blog'].map(x=><Pressable key={x} onPress={()=>setSection(x)} style={[s.chip,section===x&&s.chipOn]}><Text style={[s.chipText,section===x&&{color:BK}]}>{x.toUpperCase()}</Text></Pressable>)}</View>
     {section==='Journal'&&<><Card title="PRIVATE JOURNAL" cyan><Field value={journal} onChangeText={setJournal} placeholder="What happened? What did you feel? What do you need?" multiline/><Action label="SAVE ENTRY  +10 XP" onPress={saveEntry}/></Card>{entries.map(e=><Card key={e.id} title={e.date}><Text style={s.text}>{e.text}</Text><Pressable onPress={()=>deleteEntry(e)}><Text style={s.delete}>DELETE ENTRY</Text></Pressable></Card>)}{!entries.length&&<Empty>Your first entry can be messy. It just has to be yours.</Empty>}</>}
     {section==='Vision'&&<VisionStudio/>}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SafeAreaView, View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VisionStudio from './VisionStudio';
@@ -92,8 +93,8 @@ export default function App(){
  const accent=theme==='cyan'?CY:theme==='purple'?PU:P;
  const badges=[...(entries.length>=1?[{name:'FIRST PAGE',desc:'You wrote your first journal page.'}]:[]),...(goals.filter(g=>g.done).length>=1?[{name:'GOAL GETTER',desc:'You completed a goal.'}]:[]),...(xp>=100?[{name:'100 XP CLUB',desc:'You earned 100 experience points.'}]:[]),...(challenge&&challengeDays.length>=challenge.days?[{name:'COMMITMENT KEEPER',desc:'You completed a growth challenge.'}]:[]),...(timeline.length>=10?[{name:'STORY BUILDER',desc:'You saved ten moments in your Journey.'}]:[])];
  const monthMoments=timeline.filter(x=>{const d=new Date(x.sort||0),n=new Date();return x.sort&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear()}).length;
- if(!loaded)return <SafeAreaView style={s.safe}><StatusBar style="light"/><View style={s.loading}><Text style={[s.logo,{color:accent,textShadowColor:accent}]}>PINKPRINT</Text><Text style={s.dim}>Opening your blueprint…</Text></View></SafeAreaView>;
- return <SafeAreaView style={s.safe}><StatusBar style="light"/>
+ if(!loaded)return <SafeAreaProvider><SafeAreaView edges={['top','bottom']} style={s.safe}><StatusBar style="light"/><View style={s.loading}><Text style={[s.logo,{color:accent,textShadowColor:accent}]}>PINKPRINT</Text><Text style={s.dim}>Opening your blueprint…</Text></View></SafeAreaView></SafeAreaProvider>;
+ return <SafeAreaProvider><SafeAreaView edges={['top','bottom']} style={s.safe}><StatusBar style="light"/>
   <View style={[s.head,{borderBottomColor:accent}]}><View pointerEvents="none" style={s.print}><Text style={s.spots}>◉　●　◎　◉{'\n'}●　◎　◉　●{'\n'}◎　◉　●　◎</Text></View><Text style={s.logo}>PINKPRINT</Text><Text style={s.tag}>YOUR LIFE • YOUR PATTERNS • YOUR BLUEPRINT</Text></View>
   <ScrollView key={tab} contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
    {tab==='Home'&&<><Text style={s.hero}>YOUR DAY, YOUR WAY.</Text><Text style={s.sub}>Small choices. Real progress. No perfection required.</Text>
@@ -132,7 +133,7 @@ export default function App(){
     <Card title="A LITTLE REMINDER"><Text style={s.quote}>“You are allowed to be a work in progress and still be proud of yourself.”</Text><Text style={s.dim}>Your journey is not a race or a score. The timeline is here to help you notice your growth.</Text></Card></>}
   </ScrollView>
   <View style={s.nav}>{tabs.map(t=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===t}} key={t} onPress={()=>setTab(t)} style={[s.navBtn,tab===t&&s.navOn]}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.navText,tab===t&&s.navTextOn]}>{t}</Text></Pressable>)}</View>
- </SafeAreaView>;
+ </SafeAreaView></SafeAreaProvider>;
 }
 const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:BK},loading:{flex:1,alignItems:'center',justifyContent:'center',gap:12},

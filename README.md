@@ -37,3 +37,8 @@ The project uses Expo SDK 54. To produce a release APK locally, generate the nat
 ## Before calling it finished
 
 A production-ready release still needs a successful clean build, device testing on the intended Samsung Galaxy Fold, accessibility and small-screen checks, validation of persistence/error handling, a privacy/data-export plan, and implementation or explicit removal of unfinished integrations (AI Coach, photo-based vision boards, and WordPress publishing).
+
+
+## PinkPrint AI
+
+The Coach tab now includes a real AI chat interface. It requires a deployed authenticated backend; it is intentionally not connected until you configure it. See [AI_SETUP.md](AI_SETUP.md) for Cloudflare Worker deployment, secure secrets, and app connection steps. Never put an OpenAI API key in the mobile app.
